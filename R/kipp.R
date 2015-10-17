@@ -6,7 +6,9 @@
 #competitive index
 #adjusted 6 year minority graduation rate
 
+
 #### PREPROCESSING ####
+
 
 college <- read.csv("~/Dropbox/Teradata DataDive 2015/KIPP LA/CollegeTierMapping.csv")
 salesforce <- read.csv("~/Dropbox/Teradata DataDive 2015/KIPP LA/SALESFORCE-Enrollment.csv")
@@ -29,9 +31,9 @@ require(reshape2)
 nwea10 <- read.csv("~/Dropbox/Teradata DataDive 2015/KIPP LA/NWEA-2010.csv")
 nwea10sub <- nwea10[,c(1,3,4,6,15)] #  "nwea_2010_id" "nwea_2010_TermName"   "nwea_2010_localStudentID" "nwea_2010_Discipline"  "nwea_2010_TestPercentile" 
 nwea10subcast<- dcast(nwea10sub, nwea_2010_localStudentID~nwea_2010_Discipline+nwea_2010_TermName, 
-                      fun.aggregate = mean) #lose the "nwea_2010_id", but that's OK
-#seems that in one quarter a single student can register two scores in the same subject, we average them (fun.aggregate=mean)
-nwea10subcast[sapply(nwea10subcast, is.nan)]=NA
+                      fun.aggregate = max) #lose the "nwea_2010_id", but that's OK
+#seems that in one quarter a single student can register two scores in the same subject, we take the max (fun.aggregate=mean)
+nwea10subcast[sapply(nwea10subcast, is.infinite)]=NA
 dim(nwea10subcast) #521,9
 salesforce10 = merge(nwea10subcast, salesforce, by.x = "nwea_2010_localStudentID", by.y = "local_student_id", all.y=T)
 dim(salesforce10) #4438, 54
@@ -40,9 +42,9 @@ dim(salesforce10) #4438, 54
 nwea11 <- read.csv("~/Dropbox/Teradata DataDive 2015/KIPP LA/NWEA-2011.csv")
 nwea11sub <- nwea11[,c(1,3,4,6,14)]
 nwea11subcast<- dcast(nwea11sub, nwea_2011_localStudentID~nwea_2011_Discipline+nwea_2011_TermName, 
-                      fun.aggregate = mean) #lose the "nwea_2011_id", but that's OK
+                      fun.aggregate = max) #lose the "nwea_2011_id", but that's OK
 #seems that in one quarter a single student can register two scores in the same subject, we average them (fun.aggregate=mean)
-nwea11subcast[sapply(nwea11subcast, is.nan)]=NA
+nwea11subcast[sapply(nwea11subcast, is.infinite)]=NA
 dim(nwea11subcast) #977,7
 salesforce11 = merge(nwea11subcast, salesforce10, by.x = "nwea_2011_localStudentID", by.y = "nwea_2010_localStudentID", all.y=T)
 dim(salesforce11) #4438, 60
@@ -51,7 +53,9 @@ dim(salesforce11) #4438, 60
 salesforce.small = salesforce11[, c(1:17,28:31, 34, 38:39, 43, 45:47, 53:60)]
 dim(salesforce.small) #4438, 36
 
+
 #### ANALYSIS, college quality <- early test scores ####
+
 
 kippdata = salesforce.small
 summary(kippdata)
@@ -65,6 +69,7 @@ length(percentile.mean)/(dim(kippdata)[1])
 #For those who have any scores, how many scores do they have? most have 6-8
 table(14 - rowSums(is.na(kippdata[,2:15])))
 barplot(table(14 - rowSums(is.na(kippdata[,2:15])))[2:14])
+
 
 #SCORES -> COLLEGE?
 
@@ -82,9 +87,9 @@ kippdata$COMPETITIVENESS_INDEX__C[removeindex]=NA
 
 #initial model -> competitiveness index as a function of mean score (percentile) for what's available
 model1 <- lm(kippdata$COMPETITIVENESS_INDEX__C~rowavg)
-plot(rowavg, kippdata$COMPETITIVENESS_INDEX__C) 
 summary(model1) #113 data points (after removing 1994)
 plot(model1) #one outlier (1994) has only one score and it's for science so retroactively removed
+plot(rowavg, kippdata$COMPETITIVENESS_INDEX__C) 
 abline(model1$coefficients, col = "red")
 
 #perhaps some predictive power, but very low R-squared. try removing all 0 who go to 2-year college?
