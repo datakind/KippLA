@@ -55,8 +55,6 @@ dim(salesforce.small) #4438, 36
 
 
 #### ANALYSIS, college quality <- early test scores ####
-
-
 kippdata = salesforce.small
 summary(kippdata)
 
@@ -73,12 +71,13 @@ barplot(table(14 - rowSums(is.na(kippdata[,2:15])))[2:14])
 
 #SCORES -> COLLEGE?
 
+
 #looking at the zeros of college competitiveness:
 comp0 <- kippdata[kippdata$COMPETITIVENESS_INDEX__C==0 & !is.na(kippdata$COMPETITIVENESS_INDEX__C==0),]
 summary(comp0)
 data.frame(comp0$COMPETITIVENESS_RANKING__C, comp0$School.Name)
 
-#suggests we should remove collges labeled highly or very competitive which have the 0 competitive index
+#suggests we should remove colleges labeled highly or very competitive which have the 0 competitive index
 removeindex = c(which(kippdata$COMPETITIVENESS_INDEX__C==0 & 
         (kippdata$COMPETITIVENESS_RANKING__C=="Very Competitive"|kippdata$COMPETITIVENESS_RANKING__C=="Highly Competitive")))
 removeindex = c(removeindex, 1994) #based on below outlier
@@ -86,6 +85,7 @@ removeindex = c(removeindex, 1994) #based on below outlier
 kippdata$COMPETITIVENESS_INDEX__C[removeindex]=NA
 
 #initial model -> competitiveness index as a function of mean score (percentile) for what's available
+# (0s for two-year colleges have not been removed)
 model1 <- lm(kippdata$COMPETITIVENESS_INDEX__C~rowavg)
 summary(model1) #113 data points (after removing 1994)
 plot(model1) #one outlier (1994) has only one score and it's for science so retroactively removed
@@ -97,16 +97,19 @@ kippdata2 = kippdata
 removeindex2 = which(kippdata2$COMPETITIVENESS_INDEX__C == 0 & kippdata2$COMPETITIVENESS_RANKING__C == "2 year (Noncompetiti")
 kippdata2$COMPETITIVENESS_INDEX__C[removeindex2]=NA
 
+#competitiveness index as a function of mean score (percentile) for what's available, 0 for 2-years colleges removed
 model2 <- lm(kippdata2$COMPETITIVENESS_INDEX__C~rowavg) #higher correlation
 plot(rowavg, kippdata2$COMPETITIVENESS_INDEX__C) 
 summary(model2) #74 data points
 plot(model2) 
 abline(model2$coefficients, col = "red")
+#ok. why not more predictive? 
 
-#why not more predictive? especially curoius about the high score students who go to colleges less than -1
-compneg1 <- kippdata[kippdata$COMPETITIVENESS_INDEX__C < -1 & !is.na(kippdata$COMPETITIVENESS_INDEX__C ), c(31,34:35)]
+# Corrupted data? ####
 
+#wondered about the high score students who go to colleges less than -1
 #??? some "very competitive" schools have negative competition index ???
+compneg1 <- kippdata[kippdata$COMPETITIVENESS_INDEX__C < -1 & !is.na(kippdata$COMPETITIVENESS_INDEX__C ), c(31,34:35)]
 
 #Try using competiveness scale instead?? doesn't really help. could just get rid of the bad data instead.
 compval = as.factor(kippdata$COMPETITIVENESS_RANKING__C)
