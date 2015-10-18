@@ -1,14 +1,6 @@
 #KIPP LA
 
-#distribution of colleges attended by tier
-
-#competitiveness ranking
-#competitive index
-#adjusted 6 year minority graduation rate
-
-
-#### PREPROCESSING ####
-
+##1.  PREPROCESSING ####
 
 college <- read.csv("~/Dropbox/Teradata DataDive 2015/KIPP LA/CollegeTierMapping.csv")
 salesforce <- read.csv("~/Dropbox/Teradata DataDive 2015/KIPP LA/SALESFORCE-Enrollment.csv")
@@ -54,7 +46,8 @@ salesforce.small = salesforce11[, c(1:17,28:31, 34, 38:39, 43, 45:47, 53:60)]
 dim(salesforce.small) #4438, 36
 
 
-#### ANALYSIS, college quality <- early test scores ####
+##2. ANALYSIS, college quality <- early test scores ####
+
 kippdata = salesforce.small
 summary(kippdata)
 
@@ -69,46 +62,47 @@ table(14 - rowSums(is.na(kippdata[,2:15])))
 barplot(table(14 - rowSums(is.na(kippdata[,2:15])))[2:14])
 
 
-#SCORES -> COLLEGE?
-
+##3. SCORES -> COLLEGE? ####
 
 #looking at the zeros of college competitiveness:
 comp0 <- kippdata[kippdata$COMPETITIVENESS_INDEX__C==0 & !is.na(kippdata$COMPETITIVENESS_INDEX__C==0),]
 summary(comp0)
 data.frame(comp0$COMPETITIVENESS_RANKING__C, comp0$School.Name)
 
-#suggests we should remove colleges labeled highly or very competitive which have the 0 competitive index
-removeindex = c(which(kippdata$COMPETITIVENESS_INDEX__C==0 & 
-        (kippdata$COMPETITIVENESS_RANKING__C=="Very Competitive"|kippdata$COMPETITIVENESS_RANKING__C=="Highly Competitive")))
-removeindex = c(removeindex, 1994) #based on below outlier
-#make them NA:
-kippdata$COMPETITIVENESS_INDEX__C[removeindex]=NA
+#initial model -> competitiveness index as a function 
+#of mean score (percentile) of all available scores
 
-#initial model -> competitiveness index as a function of mean score (percentile) for what's available
 # (0s for two-year colleges have not been removed)
 model1 <- lm(kippdata$COMPETITIVENESS_INDEX__C~rowavg)
 summary(model1) #113 data points (after removing 1994)
 plot(model1) #one outlier (1994) has only one score and it's for science so retroactively removed
 plot(rowavg, kippdata$COMPETITIVENESS_INDEX__C) 
 abline(model1$coefficients, col = "red")
+#very low R-squared (.1237). 
 
-#perhaps some predictive power, but very low R-squared. try removing all 0 who go to 2-year college?
+#we should remove colleges labeled highly or very competitive which have the 0 competitive index
+removeindex = c(which(kippdata$COMPETITIVENESS_INDEX__C==0 & 
+              (kippdata$COMPETITIVENESS_RANKING__C=="Very Competitive"|kippdata$COMPETITIVENESS_RANKING__C=="Highly Competitive")))
+removeindex = c(removeindex, 1994) #based on below outlier
+#make them NA:
+kippdata$COMPETITIVENESS_INDEX__C[removeindex]=NA
+
 kippdata2 = kippdata 
 removeindex2 = which(kippdata2$COMPETITIVENESS_INDEX__C == 0 & kippdata2$COMPETITIVENESS_RANKING__C == "2 year (Noncompetiti")
 kippdata2$COMPETITIVENESS_INDEX__C[removeindex2]=NA
 
 #competitiveness index as a function of mean score (percentile) for what's available, 0 for 2-years colleges removed
 model2 <- lm(kippdata2$COMPETITIVENESS_INDEX__C~rowavg) #higher correlation
-plot(rowavg, kippdata2$COMPETITIVENESS_INDEX__C) 
-summary(model2) #74 data points
+summary(model2) #74 data points, r-squared .32
 plot(model2) 
+plot(rowavg, kippdata2$COMPETITIVENESS_INDEX__C, ylab ="Competitiveness Index",
+     xlab="Avg. Percentile NWEA Score (2010,2011)", main = "NWEA Score -> College") 
 abline(model2$coefficients, col = "red")
-#ok. why not more predictive? 
+#ok. why not more predictive? -> in part because it's college attended not best accepted?
 
-# Corrupted data? ####
+# Data anomalies? ####
 
-#wondered about the high score students who go to colleges less than -1
-#??? some "very competitive" schools have negative competition index ???
+#some high score students go to colleges less than -1 competitiveness index /  some "very competitive" colleges have competitiveness index < -1
 compneg1 <- kippdata[kippdata$COMPETITIVENESS_INDEX__C < -1 & !is.na(kippdata$COMPETITIVENESS_INDEX__C ), c(31,34:35)]
 
 #Try using competiveness scale instead?? doesn't really help. could just get rid of the bad data instead.
