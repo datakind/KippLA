@@ -112,3 +112,22 @@ compval = as.numeric(levels(compval))[compval]
 model3 <- lm(compval~rowavg)
 summary(model3)
 plot(rowavg, compval)
+
+# Tier x cutoff ####
+
+#2015 HS COHORT
+kipp2015 = kippdata[kippdata$STUDENT_HS_COHORT__C==2015 & kippdata$COMPETITIVENESS_RANKING__C!="2 year (Noncompetiti",]
+#Fall
+#remove outlier
+kipp2015 = kipp2015[-53,]
+plot(kipp2015$"Mathematics_Fall 2010-2011"~kipp2015$COMPETITIVENESS_INDEX__C, main = "2015 Cohort")
+abline(h = 86, col = "green", lty = 2)
+abline(h = 61, col = "red", lty = 2)
+
+plot(kipp2015$"Reading_Fall 2010-2011"~kipp2015$COMPETITIVENESS_INDEX__C)
+abline(h = 79, col = "green", lty = 2)
+abline(h = 55, col = "red", lty = 2)
+
+#Spring
+plot(kipp2015$"Mathematics_Spring 2010-2011"~kipp2015$COMPETITIVENESS_INDEX__C)
+plot(kipp2015$"Reading_Spring 2010-2011"~kipp2015$COMPETITIVENESS_INDEX__C)
