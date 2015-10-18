@@ -1,8 +1,9 @@
 #MAP scores analysis
 
 #Code to merge the sbac scores with 2015 nwea scores and model the relationship.
-#There is a medium correlation between the scores (r-squared 0.5682 for ela/reading, .6546 for math).
-#I plot the data and predicton intervals for individuals' scores
+#There is a medium correlation between the scores 
+#(r-squared 0.5682 for ela/reading, .6546 for math).
+#Code to organize and plot the data with predicton intervals on individuals' scores
 
 #1. Get the SBAC data ####
 sbac <- read.csv("~/Dropbox/Teradata DataDive 2015/KIPP LA/SBAC.csv")
