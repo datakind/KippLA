@@ -46,6 +46,7 @@ nwea15sbac[!is.na(match1),8:9] = sbac[match1[!is.na(match1)],c(2,3)]
 names(nwea15sbac)[8:9] = names(sbac)[2:3]
 head(nwea15sbac)
 dim(nwea15sbac)
+#write.csv(nwea15sbac, "nwea15sbac.csv")
 
 #3. Analyze, correlation sbac15 and nwea15? ####
 
@@ -78,20 +79,27 @@ summary(model.ela15)
 abline(model.ela15$coefficients, col="red")
 
 # prediction plot ####
+# shows that although there is a definite correlation the prediction isn't precise
 par(mfrow = c(2,1))
 
 #ela
-plot(rowMeans(nwea15sbac[,c(5:7)],na.rm=T), nwea15sbac$"ELA", main = "Reading/ELA Data/Trend/Prediction Interval")
+plot(rowMeans(nwea15sbac[,c(5:7)],na.rm=T), nwea15sbac$"ELA", 
+     main = "Reading Data/Trend/Prediction Interval (.95)", 
+     xlab = "Avg. NWEA 15 Reading",
+     ylab = "SBAC ELA", cex = .8)
 abline(model.ela15$coefficients, col="red")
 predict.ela15 <- predict(model.ela15, newdata = data.frame(x = 1:100), interval = "prediction")
-matpoints(rowMeans(nwea15sbac[,c(5:7)]), predict.ela15,
+matpoints(rowMeans(nwea15sbac[,c(5:7)]), predict.ela15, col = c(2,3,4),
         lty = c(1,2,2), type = "l", ylab = "predicted y")
 
 #math
-plot(rowMeans(nwea15sbac[,c(5:7)],na.rm=T), nwea15sbac$"Math", main = "Math Data/Trend/Prediction Interval")
+plot(rowMeans(nwea15sbac[,c(5:7)],na.rm=T), nwea15sbac$"Math", 
+     main = "Math Data/Trend/Prediction Interval (.95)",
+     xlab = "Avg. NWEA 15 Math",
+     ylab = "SBAC Math", cex = .8)
 abline(model.math15$coefficients, col="red")
 predict.math15 <- predict(model.math15, newdata = data.frame(x = 1:100), interval = "prediction")
-matpoints(rowMeans(nwea15sbac[,c(2:4)]), predict.math15,
+matpoints(rowMeans(nwea15sbac[,c(2:4)]), predict.math15, col = c(2,3,4),
           lty = c(1,2,2), type = "l", ylab = "predicted y")
 
 # #x. Combine with kippdata IGNORE - not enough data ####
